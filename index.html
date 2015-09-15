@@ -40,9 +40,10 @@
 </head>
 <body>
 <div id="con">
-    <div id="title" class="pb20">AES 加解密示例演示：</div>
+    <div id="title" class="pb20">AES 加解密示例演示(以base64的形式输出)：</div>
     <div  class="pb20">
-        key: <input id="keyInput" type="text" value="hello world" />
+       密钥 : <input id="keyInput" type="text" value="" placeholder="16位随机密码"/>
+        <input id="createAesPwd" value="点击生成随机密钥" type="button" />
     </div>
     <div class="pb20">
         OriginalText: <textarea id="OriginalText" placeholder="这个是原文区域"></textarea>
@@ -50,13 +51,6 @@
     <div class="pb20">
         <button id="encrypt">加密</button>
         <button id="decrypt">解密</button>
-    </div>
-    <div class="pb20">
-        加密方式：
-        <select id="type">
-            <option value="1">hex</option>
-            <option value="2">base64</option>
-        </select>
     </div>
     <div class="pb20">
         Ciphertext: <textarea id="Ciphertext" placeholder="这个是密文区域"></textarea>
@@ -67,70 +61,30 @@
     var $ = function(id){
         return document.getElementById(id);
     };
-    var desUtil = {
-        // des的key
-        _key : "",
-        // 加密类型，默认是16进制
-        _type: 1,
-        // des 加密
-        encrypt: function(message){
-            var key = this._key;
-            var keyHex = CryptoJS.enc.Utf8.parse(key);
-            var encrypted = CryptoJS.DES.encrypt(message, keyHex, {
-                mode: CryptoJS.mode.ECB,
-                padding: CryptoJS.pad.Pkcs7
-            });
-            var result = "";
-            switch(this._type.toString()){
-                case "1":
-                    //16 进制
-                    result = encrypted.ciphertext.toString(CryptoJS.enc.Hex);
-                    break;
-                case "2":
-                    // base64
-                    result = encrypted.toString();
-                    break;
-            }
-            return result;
-        },
-        // des 解密
-        decrypt: function(ciphertext){
-            var key = this._key;
-            var keyHex = CryptoJS.enc.Utf8.parse(key);
-            var textStr = "";
-            switch(this._type.toString()){
-                case "1":
-                    //16 进制
-                    textStr = CryptoJS.enc.Hex.parse(ciphertext);
-                    break;
-                case "2":
-                    // base64
-                    textStr = CryptoJS.enc.Base64.parse(ciphertext);
-                    break;
-            }
-            // direct decrypt ciphertext
-            var decrypted = CryptoJS.DES.decrypt({
-                // 这边要传化为16进制
-                ciphertext: textStr
-            }, keyHex, {
-                mode: CryptoJS.mode.ECB,
-                padding: CryptoJS.pad.Pkcs7
-            });
-            return decrypted.toString(CryptoJS.enc.Utf8);
-        }
-    };
-    $("keyInput").onkeyup = function(){
-        desUtil._key = $("keyInput").value;
-    };
-    $("type").onchange = function(){
-        desUtil._type = $("type").value;
+    $("createAesPwd").onclick = function(){
+        $("keyInput").value = window.aesUtil.createAESKey();
     };
     $("encrypt").onclick = function(){
-        $("Ciphertext").value = desUtil.encrypt($("OriginalText").value);
+        var pwd = $("keyInput").value.trim();
+        var originText = $("OriginalText").value.trim();
+        if(!pwd || !originText){
+            alert("密钥或者原文不能为空");
+        }else if(pwd.length != 16){
+            alert("密钥位数要为16位");
+        }else{
+            $("Ciphertext").value = window.aesUtil.encryptToBase64(pwd, originText);
+        }
     };
     $("decrypt").onclick = function(){
-        $("OriginalText").value = desUtil.decrypt($("Ciphertext").value);
+        var pwd = $("keyInput").value.trim();
+        var cipherText = $("Ciphertext").value.trim();
+        if(!pwd || !cipherText){
+            alert("密钥或者密文不能为空");
+        }else if(pwd.length != 16){
+            alert("密钥位数要为16位");
+        }else{
+            $("OriginalText").value = window.aesUtil.decryptFromBase64(pwd, cipherText);
+        }
     };
-    $("keyInput").onkeyup();
 </script>
 </html>
